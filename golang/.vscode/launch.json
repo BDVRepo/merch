@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "backend-chi: run local",
+            "type": "go",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/backend-chi", 
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/../envs/local.env" // Проверьте путь!
+        },
+        {
+            "name": "gen-type: run local",
+            "type": "go",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/gen-type", 
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/../envs/local.env" // Проверьте путь!
+        }
+    ]
+}
