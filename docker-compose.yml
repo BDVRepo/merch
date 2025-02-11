@@ -27,7 +27,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - ./envs/local.env
+      - ./envs/docker.env
     volumes:
       - ./envs:/envs
     depends_on:

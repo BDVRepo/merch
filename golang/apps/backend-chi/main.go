@@ -16,6 +16,10 @@ import (
 func main() {
 	env_vars.LoadEnvVars() // load env vars from .env file if ENV_PATH is specified
 	os.Setenv("LOG_LEVEL", "debug")
+	BACKEND_PORT := os.Getenv("BACKEND_PORT")
+	if BACKEND_PORT == "" {
+		BACKEND_PORT = "8080"
+	}
 
 	logger := smart_context.NewSmartContext()
 
@@ -46,7 +50,7 @@ func main() {
 
 	// wsupgrader := ws_server.NewWsUpgrader(logger)
 
-	logger.Info("Server listening on port 8080")
-	err = http.ListenAndServe(":8080", r)
+	logger.Info("Server listening on port " + BACKEND_PORT)
+	err = http.ListenAndServe(":"+BACKEND_PORT, r)
 	logger.Fatal(err)
 }
