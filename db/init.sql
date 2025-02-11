@@ -1,52 +1,62 @@
-CREATE DOMAIN ID AS INTEGER;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Включаем поддержку UUID
+
 CREATE DOMAIN CODE AS VARCHAR(50);
 
 CREATE TABLE doc_merchs (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code CODE UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    price INT NOT NULL CHECK (price > 0)
+    price INT NOT NULL CHECK (price > 0),
+    created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE auth_users (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE TABLE auth.users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     login TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE info_users (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    balance INT NOT NULL CHECK (balance >= 0)
+    balance INT NOT NULL CHECK (balance >= 0),
+    created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE doc_merch_transactions (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    merch_id INTEGER NOT NULL REFERENCES doc_merchs(id) ON DELETE CASCADE,
-    receiver_id INTEGER NOT NULL REFERENCES info_users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    merch_code UUID NOT NULL REFERENCES doc_merchs(id),
+    receiver_id UUID NOT NULL REFERENCES info_users(id),
     amount INT NOT NULL CHECK (amount > 0),
     created_at TIMESTAMP DEFAULT now()
 );
 
--- Наполнение таблицы doc_merchs данными из задания
-INSERT INTO doc_merchs (code, name, price) VALUES
-    ('T_SHIRT', 't-shirt', 80),
-    ('CUP', 'cup', 20),
-    ('BOOK', 'book', 50),
-    ('PEN', 'pen', 10),
-    ('POWERBANK', 'powerbank', 200),
-    ('HOODY', 'hoody', 300),
-    ('UMBRELLA', 'umbrella', 200),
-    ('SOCKS', 'socks', 10),
-    ('WALLET', 'wallet', 50),
-    ('PINK_HOODY', 'pink-hoody', 500);
+-- Добавляем сортировку по умолчанию
+CREATE INDEX idx_doc_merchs_created_at ON doc_merchs (created_at DESC);
+CREATE INDEX idx_auth_users_created_at ON auth.users (created_at DESC);
+CREATE INDEX idx_info_users_created_at ON info_users (created_at DESC);
+CREATE INDEX idx_doc_merch_transactions_created_at ON doc_merch_transactions (created_at DESC);
 
--- Тестовые данные для пользователей
-INSERT INTO auth_users (login, password) VALUES
-    ('user1', 'hashed_password1'),
-    ('user2', 'hashed_password2');
+-- Вставка товаров
+INSERT INTO doc_merchs (name, price) VALUES
+    ('t-shirt', 80),
+    ('cup', 20),
+    ('book', 50),
+    ('pen', 10),
+    ('powerbank', 200),
+    ('hoody', 300),
+    ('umbrella', 200),
+    ('socks', 10),
+    ('wallet', 50),
+    ('pink-hoody', 500);
+
+INSERT INTO auth.users (id,login, password) VALUES
+    ('550e8400-e29b-41d4-a716-446655440001', 'user1', 'hashed_password1'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'user2', 'hashed_password2');
 
 INSERT INTO info_users (user_id, name, balance) VALUES
-    (1, 'User One', 1000),
-    (2, 'User Two', 1000);
+    ('550e8400-e29b-41d4-a716-446655440001', 'User One', 1000),
+    ('550e8400-e29b-41d4-a716-446655440002', 'User Two', 1000);

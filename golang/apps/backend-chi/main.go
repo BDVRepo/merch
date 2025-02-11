@@ -46,7 +46,7 @@ func main() {
 
 	// wsupgrader := ws_server.NewWsUpgrader(logger)
 
-	logger.Info("Server listening on port 9000")
-	err = http.ListenAndServe(":9000", r)
+	logger.Info("Server listening on port 8080")
+	err = http.ListenAndServe(":8080", r)
 	logger.Fatal(err)
 }

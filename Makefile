@@ -1,5 +1,4 @@
 ENV_LOCAL=./envs/local.env
-
 # Загружаем переменные из .env-файла
 include $(ENV_LOCAL)
 export $(shell sed 's/=.*//' $(ENV_LOCAL))
