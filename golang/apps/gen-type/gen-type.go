@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bdv-avito-merch/libs/4_infrastructure/db_manager"
-	"bdv-avito-merch/libs/5_common/env_vars"
-	"bdv-avito-merch/libs/5_common/smart_context"
+	"bdv-avito-merch/libs/3_infrastructure/db_manager"
+	"bdv-avito-merch/libs/4_common/env_vars"
+	"bdv-avito-merch/libs/4_common/smart_context"
 	"os"
 
 	"gorm.io/gen"

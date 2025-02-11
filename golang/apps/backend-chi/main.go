@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bdv-avito-merch/libs/4_infrastructure/db_manager"
-	"bdv-avito-merch/libs/5_common/env_vars"
-	"bdv-avito-merch/libs/5_common/smart_context"
-	"encoding/json"
+	"bdv-avito-merch/libs/1_domain_methods/handlers"
+	"bdv-avito-merch/libs/3_infrastructure/db_manager"
+	"bdv-avito-merch/libs/4_common/env_vars"
+	"bdv-avito-merch/libs/4_common/middleware"
+	"bdv-avito-merch/libs/4_common/smart_context"
 	"net/http"
 	"os"
 
@@ -16,8 +17,8 @@ import (
 func main() {
 	env_vars.LoadEnvVars() // load env vars from .env file if ENV_PATH is specified
 	os.Setenv("LOG_LEVEL", "debug")
-	BACKEND_PORT := os.Getenv("BACKEND_PORT")
-	if BACKEND_PORT == "" {
+	BACKEND_PORT, ok := os.LookupEnv("BACKEND_PORT")
+	if !ok {
 		BACKEND_PORT = "8080"
 	}
 
@@ -44,11 +45,18 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{"message": "Hello from Chi!"})
-	})
+	// r.Post("/login", run_processor.JSONResponseMiddleware(logger, handlers.LoginHandler))
 
-	// wsupgrader := ws_server.NewWsUpgrader(logger)
+	// Эндпоинт аутентификации
+	r.Post("/api/auth", handlers.LoginHandler(logger.GetDB()))
+
+	r.Group(func(protected chi.Router) {
+		protected.Use(middleware.AuthMiddleware)
+
+		protected.Get("/api/info", handlers.InfoHandler)
+		protected.Post("/api/sendCoin", handlers.SendCoinHandler)
+		protected.Get("/api/buy/{item}", handlers.BuyItemHandler)
+	})
 
 	logger.Info("Server listening on port " + BACKEND_PORT)
 	err = http.ListenAndServe(":"+BACKEND_PORT, r)

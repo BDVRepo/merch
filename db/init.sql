@@ -52,11 +52,3 @@ INSERT INTO doc_merchs (name, price) VALUES
     ('socks', 10),
     ('wallet', 50),
     ('pink-hoody', 500);
-
-INSERT INTO auth.users (id,login, password) VALUES
-    ('550e8400-e29b-41d4-a716-446655440001', 'user1', 'hashed_password1'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'user2', 'hashed_password2');
-
-INSERT INTO info_users (user_id, name, balance) VALUES
-    ('550e8400-e29b-41d4-a716-446655440001', 'User One', 1000),
-    ('550e8400-e29b-41d4-a716-446655440002', 'User Two', 1000);
