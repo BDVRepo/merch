@@ -1,6 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Включаем поддержку UUID
 
-CREATE DOMAIN CODE AS VARCHAR(50);
 
 CREATE TABLE doc_merchs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -35,7 +34,9 @@ CREATE TABLE doc_user_merchs (
 CREATE TABLE doc_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     sender_id UUID NOT NULL REFERENCES doc_users(id),
-    receiver_id UUID NOT NULL REFERENCES doc_users(id),
+    operation_code TEXT NOT NULL,   -- тут допустим buy,send и одно поле заполнено receiver_id или merch_id
+    receiver_id UUID REFERENCES doc_users(id),
+    merch_id UUID  REFERENCES doc_merchs(id),
     amount INT NOT NULL CHECK (amount > 0),
     created_at TIMESTAMP DEFAULT now(),
     CONSTRAINT sender_receiver_check CHECK (sender_id != receiver_id) -- Ограничение на то, чтобы сотрудник не отправлял монетки себе

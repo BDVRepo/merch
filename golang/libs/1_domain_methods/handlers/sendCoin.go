@@ -5,30 +5,16 @@ import (
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gorm.io/gorm"
 )
 
+// Структура для отправки монет
 type SendCoinRequest struct {
 	logger     smart_context.ISmartContext
 	ToUsername string `json:"to_username"`
 	Amount     int32  `json:"amount"`
-}
-
-// Канал для работы с балансом
-var balanceQueue = make(chan SendCoinRequest, 1000) // Очередь для задач с монетами
-
-// Обработчик очереди задач
-func BalanceWorker() {
-	for req := range balanceQueue {
-		// Обрабатываем задачу
-		err := sendCoinTransaction(req)
-		if err != nil {
-			log.Println("Error processing transaction:", err)
-		}
-	}
 }
 
 // Функция для обработки транзакции
@@ -73,9 +59,10 @@ func sendCoinTransaction(req SendCoinRequest) error {
 
 		// 5. Запись транзакции
 		transaction := model.DocTransaction{
-			SenderID:   *sender.ID,
-			ReceiverID: *receiver.ID,
-			Amount:     req.Amount,
+			SenderID:      *sender.ID,
+			ReceiverID:    receiver.ID,
+			OperationCode: "SEND",
+			Amount:        req.Amount,
 		}
 
 		if err := tx.Create(&transaction).Error; err != nil {
@@ -96,8 +83,8 @@ func SendCoinHandler(logger smart_context.ISmartContext, w http.ResponseWriter, 
 	req.logger = logger
 
 	// Ставим задачу в очередь
-	balanceQueue <- req
+	balanceRequests <- req
 
-	// Ответ об успешной отправке
+	// TODO:Ответ об успешной отправке
 	w.WriteHeader(http.StatusOK)
 }
