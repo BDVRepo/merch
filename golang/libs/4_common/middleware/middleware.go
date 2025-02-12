@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -20,14 +21,15 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// AuthMiddleware - проверяет JWT и передает user_id в контекст запроса
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("token")
-		if err != nil {
+		authHeader := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		jwtSecret, ok := os.LookupEnv("JWT_SECRET")
 		if !ok {
@@ -35,7 +37,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("invalid signing method")
 			}

@@ -23,7 +23,7 @@ func GenerateToken(userID string) (string, error) {
 	if !ok {
 		return "", errors.New("JWT_SECRET is not set")
 	}
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(2 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,7 +35,6 @@ func GenerateToken(userID string) (string, error) {
 	return token.SignedString([]byte(jwtSecret))
 }
 
-// LoginHandler - обработчик входа в систему
 func LoginHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestData struct {
@@ -101,17 +100,8 @@ func LoginHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		// Устанавливаем куку
-		http.SetCookie(w, &http.Cookie{
-			Name:     "token",
-			Value:    token,
-			HttpOnly: true,
-			Secure:   false, // В проде ставить true
-			Path:     "/",
-			Expires:  time.Now().Add(24 * time.Hour),
-		})
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Login successful"})
+		// Отправляем токен в теле ответа
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"token": token})
 	}
 }

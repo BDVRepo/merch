@@ -45,18 +45,15 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// r.Post("/login", run_processor.JSONResponseMiddleware(logger, handlers.LoginHandler))
-
-	// Эндпоинт аутентификации
 	r.Post("/api/auth", handlers.LoginHandler(logger.GetDB()))
 
-	r.Group(func(protected chi.Router) {
-		protected.Use(middleware.AuthMiddleware)
+	protected := chi.NewRouter()
+	protected.Use(middleware.AuthMiddleware)
 
-		protected.Get("/api/info", handlers.InfoHandler)
-		protected.Post("/api/sendCoin", handlers.SendCoinHandler)
-		protected.Get("/api/buy/{item}", handlers.BuyItemHandler)
-	})
+	protected.Get("/api/info", handlers.InfoHandler)
+	protected.Post("/api/sendCoin", handlers.SendCoinHandler)
+	protected.Get("/api/buy/{item}", handlers.BuyItemHandler)
+	r.Mount("/", protected)
 
 	logger.Info("Server listening on port " + BACKEND_PORT)
 	err = http.ListenAndServe(":"+BACKEND_PORT, r)
