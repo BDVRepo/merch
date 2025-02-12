@@ -38,7 +38,7 @@ func GenerateToken(userID string) (string, error) {
 func LoginHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestData struct {
-			Login    string `json:"login"`
+			Login    string `json:"username"`
 			Password string `json:"password"`
 		}
 
@@ -71,13 +71,13 @@ func LoginHandler(db *gorm.DB) http.HandlerFunc {
 				}
 
 				// Создаём профиль
-				infoUser := model.InfoUser{
+				docUser := model.DocUser{
 					ID:      helpers.GenerateUUID(),
 					UserID:  *user.ID,
 					Name:    login,
 					Balance: 1000,
 				}
-				if err := db.Create(&infoUser).Error; err != nil {
+				if err := db.Create(&docUser).Error; err != nil {
 					http.Error(w, "Error creating profile", http.StatusInternalServerError)
 					return
 				}

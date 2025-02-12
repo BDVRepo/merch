@@ -18,7 +18,7 @@ CREATE TABLE auth.users (
     created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE info_users (
+CREATE TABLE doc_users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -26,19 +26,27 @@ CREATE TABLE info_users (
     created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE doc_merch_transactions (
+CREATE TABLE doc_user_merchs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    merch_code UUID NOT NULL REFERENCES doc_merchs(id),
-    receiver_id UUID NOT NULL REFERENCES info_users(id),
+    root_id UUID NOT NULL REFERENCES doc_users(id) ON DELETE CASCADE,
+    merch_id UUID NOT NULL REFERENCES doc_merchs(id)
+);
+
+CREATE TABLE doc_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sender_id UUID NOT NULL REFERENCES doc_users(id),
+    receiver_id UUID NOT NULL REFERENCES doc_users(id),
     amount INT NOT NULL CHECK (amount > 0),
-    created_at TIMESTAMP DEFAULT now()
+    created_at TIMESTAMP DEFAULT now(),
+    CONSTRAINT sender_receiver_check CHECK (sender_id != receiver_id) -- Ограничение на то, чтобы сотрудник не отправлял монетки себе
 );
 
 -- Добавляем сортировку по умолчанию
 CREATE INDEX idx_doc_merchs_created_at ON doc_merchs (created_at DESC);
 CREATE INDEX idx_auth_users_created_at ON auth.users (created_at DESC);
-CREATE INDEX idx_info_users_created_at ON info_users (created_at DESC);
-CREATE INDEX idx_doc_merch_transactions_created_at ON doc_merch_transactions (created_at DESC);
+CREATE INDEX idx_doc_users_created_at ON doc_users (created_at DESC);
+CREATE INDEX idx_doc_transactions_created_at ON doc_transactions (created_at DESC);
+CREATE INDEX idx_doc_transactions_sender_receiver ON doc_transactions (sender_id, receiver_id);
 
 -- Вставка товаров
 INSERT INTO doc_merchs (name, price) VALUES
