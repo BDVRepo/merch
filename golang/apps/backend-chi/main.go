@@ -5,6 +5,7 @@ import (
 	"bdv-avito-merch/libs/3_infrastructure/db_manager"
 	"bdv-avito-merch/libs/4_common/env_vars"
 	"bdv-avito-merch/libs/4_common/middleware"
+	"bdv-avito-merch/libs/4_common/safe_go"
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"net/http"
 	"os"
@@ -45,15 +46,15 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	r.Post("/api/auth", handlers.LoginHandler(logger.GetDB()))
+	r.Post("/api/auth", handlers.LoginHandler(logger))
 
-	protected := chi.NewRouter()
-	protected.Use(middleware.AuthMiddleware)
+	r.Get("/api/info", middleware.WithSmartContext(logger, handlers.InfoHandler))
+	r.Post("/api/sendCoin", middleware.WithSmartContext(logger, handlers.SendCoinHandler))
+	r.Get("/api/buy/{item}", middleware.WithSmartContext(logger, handlers.BuyItemHandler))
 
-	protected.Get("/api/info", handlers.InfoHandler)
-	protected.Post("/api/sendCoin", handlers.SendCoinHandler)
-	protected.Get("/api/buy/{item}", handlers.BuyItemHandler)
-	r.Mount("/", protected)
+	safe_go.SafeGo(logger, func() {
+		handlers.BalanceWorker()
+	})
 
 	logger.Info("Server listening on port " + BACKEND_PORT)
 	err = http.ListenAndServe(":"+BACKEND_PORT, r)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"bdv-avito-merch/libs/1_domain_methods/helpers"
 	"bdv-avito-merch/libs/2_generated_models/model"
+	"bdv-avito-merch/libs/4_common/smart_context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -35,7 +36,7 @@ func GenerateToken(userID string) (string, error) {
 	return token.SignedString([]byte(jwtSecret))
 }
 
-func LoginHandler(db *gorm.DB) http.HandlerFunc {
+func LoginHandler(logger smart_context.ISmartContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestData struct {
 			Login    string `json:"username"`
@@ -51,7 +52,7 @@ func LoginHandler(db *gorm.DB) http.HandlerFunc {
 		var user model.AuthUser
 
 		// Ищем пользователя
-		if err := db.Where("login = ?", login).First(&user).Error; err != nil {
+		if err := logger.GetDB().Where("login = ?", login).First(&user).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// Создаём нового пользователя
 				hashedPassword, err := helpers.HashPassword(password)
@@ -65,7 +66,7 @@ func LoginHandler(db *gorm.DB) http.HandlerFunc {
 					Login:    login,
 					Password: hashedPassword,
 				}
-				if err := db.Create(&user).Error; err != nil {
+				if err := logger.GetDB().Create(&user).Error; err != nil {
 					http.Error(w, "Error creating user", http.StatusInternalServerError)
 					return
 				}
@@ -77,7 +78,7 @@ func LoginHandler(db *gorm.DB) http.HandlerFunc {
 					Name:    login,
 					Balance: 1000,
 				}
-				if err := db.Create(&docUser).Error; err != nil {
+				if err := logger.GetDB().Create(&docUser).Error; err != nil {
 					http.Error(w, "Error creating profile", http.StatusInternalServerError)
 					return
 				}

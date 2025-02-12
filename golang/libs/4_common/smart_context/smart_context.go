@@ -189,6 +189,10 @@ func (sc *SmartContext) WithFields(fields types.Fields) ISmartContext {
 	return newPc
 }
 
+func (sc *SmartContext) GetDataFields() types.Fields {
+	return sc.dataFields
+}
+
 const DB_MANAGER_KEY = "db_manager"
 
 func (sc *SmartContext) GetDbManager() IDbManager {

@@ -27,6 +27,8 @@ type ISmartContext interface {
 	WithField(key string, value interface{}) ISmartContext // будут заполнять поля в DataField
 	WithFields(fields types.Fields) ISmartContext          // будут заполнять поля в DataField
 
+	GetDataFields() types.Fields
+
 	GetLogger() *zap.Logger
 
 	WithDbManager(db IDbManager) ISmartContext

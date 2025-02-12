@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"context"
+	"bdv-avito-merch/libs/4_common/smart_context"
 	"errors"
 	"net/http"
 	"os"
@@ -10,19 +10,17 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// ContextKey - ключ для хранения user_id в контексте
-type ContextKey string
-
-const UserIDKey ContextKey = "user_id"
-
 // Claims - структура для хранения данных токена
 type Claims struct {
 	UserID string `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func WithSmartContext(
+	externalSctx smart_context.ISmartContext,
+	handler func(sctx smart_context.ISmartContext, w http.ResponseWriter, r *http.Request),
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -48,20 +46,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		claims, ok := token.Claims.(*Claims)
-		if !ok || !token.Valid {
+		if !token.Valid {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+		authSctx := externalSctx.WithField("UserID", token.Claims.(*Claims).UserID)
 
-		// Добавляем user_id в контекст запроса
-		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// GetUserID извлекает user_id из контекста запроса
-func GetUserID(r *http.Request) (string, bool) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
-	return userID, ok
+		// Pass the updated SmartContext to the handler
+		handler(authSctx, w, r)
+	}
 }

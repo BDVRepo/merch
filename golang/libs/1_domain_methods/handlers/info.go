@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bdv-avito-merch/libs/4_common/smart_context"
 	"encoding/json"
 	"net/http"
 )
@@ -17,7 +18,7 @@ type Transaction struct {
 }
 
 // InfoHandler — получить информацию о монетах, инвентаре и транзакциях
-func InfoHandler(w http.ResponseWriter, r *http.Request) {
+func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *http.Request) {
 	// userID := r.Context().Value("user_id").(int) // предполагаем, что user_id уже в контексте
 	// Логика получения информации
 	response := InfoResponse{
