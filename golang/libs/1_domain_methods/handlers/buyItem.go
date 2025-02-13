@@ -56,19 +56,6 @@ func buyItemTransaction(req BuyItemRequest) error {
 		if err := tx.Create(&docUserMerch).Error; err != nil {
 			return fmt.Errorf("Не удалось записать покупку мерча покупателю: %w", err)
 		}
-
-		// Запись транзакции покупки
-		transaction := model.DocTransaction{
-			SenderID:      *buyer.ID,
-			MerchID:       merch.ID,
-			OperationCode: `BUY`,
-			Amount:        merch.Price,
-		}
-
-		if err := tx.Create(&transaction).Error; err != nil {
-			return fmt.Errorf("Не удалось записать транзакцию покупки: %w", err)
-		}
-
 		return nil
 	})
 }

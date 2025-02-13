@@ -59,10 +59,9 @@ func sendCoinTransaction(req SendCoinRequest) error {
 
 		// 5. Запись транзакции
 		transaction := model.DocTransaction{
-			SenderID:      *sender.ID,
-			ReceiverID:    receiver.ID,
-			OperationCode: "SEND",
-			Amount:        req.Amount,
+			SenderID:   *sender.ID,
+			ReceiverID: receiver.ID,
+			Amount:     req.Amount,
 		}
 
 		if err := tx.Create(&transaction).Error; err != nil {
