@@ -45,13 +45,13 @@ func buyItemTransaction(req BuyItemRequest) (err error, status int) {
 		var buyer model.DocUser
 		if err := tx.First(&buyer, "user_id = ?", sender_id).Error; err != nil {
 			status = http.StatusNotFound
-			return fmt.Errorf("Неизвестный покупатель: %w", err)
+			return fmt.Errorf("Неизвестный покупатель")
 		}
 		// Получаем товар для покупки
 		var merch model.DocMerch
 		if err := tx.First(&merch, "code = ?", req.MerchName).Error; err != nil {
 			status = http.StatusNotFound
-			return fmt.Errorf("Неизвестный товар: %w", err)
+			return fmt.Errorf("Неизвестный товар")
 		}
 
 		if buyer.Balance < merch.Price {
@@ -62,7 +62,7 @@ func buyItemTransaction(req BuyItemRequest) (err error, status int) {
 		// Обновление баланса покупателя
 		if err := tx.Model(&buyer).Update("balance", buyer.Balance-merch.Price).Error; err != nil {
 			status = http.StatusInternalServerError
-			return fmt.Errorf("Не удалось обновить баланс покупателя: %w", err)
+			return fmt.Errorf("Не удалось обновить баланс покупателя")
 		}
 
 		// Запись мерча покупателю
@@ -74,7 +74,7 @@ func buyItemTransaction(req BuyItemRequest) (err error, status int) {
 
 		if err := tx.Create(&docUserMerch).Error; err != nil {
 			status = http.StatusInternalServerError
-			return fmt.Errorf("Не удалось записать покупку мерча покупателю: %w", err)
+			return fmt.Errorf("Не удалось записать покупку мерча покупателю")
 		}
 		return nil
 	})

@@ -14,7 +14,7 @@ const TableNameDocMerch = "doc_merchs"
 type DocMerch struct {
 	Code      string     `gorm:"column:code;type:text;primaryKey" json:"code"`
 	Price     int32      `gorm:"column:price;type:integer;not null" json:"price"`
-	CreatedAt *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_doc_merchs_created_at,priority:1;default:CURRENT_TIMESTAMP" json:"created_at"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 }
 
 // TableName DocMerch's table name

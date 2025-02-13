@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bdv-avito-merch/libs/1_domain_methods/helpers"
 	"bdv-avito-merch/libs/2_generated_models/model"
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"testing"
@@ -35,45 +36,51 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 	logger := smart_context.NewSmartContext().WithDB(db)
 
 	// Заполнение тестовыми данными
-	login(logger, "user123", "password123")
-	buyer := model.DocUser{UserID: "user123"}
+	authBuyer := model.AuthUser{Login: "user123", Password: "password123", ID: helpers.GenerateUUID()}
+	if err := db.Create(&authBuyer).Error; err != nil {
+		t.Fatalf("failed to create merch: %v", err)
+	}
+	buyer := model.DocUser{UserID: *authBuyer.ID, Balance: 1000, ID: helpers.GenerateUUID()}
+	if err := db.Create(&buyer).Error; err != nil {
+		t.Fatalf("failed to create merch: %v", err)
+	}
 	merch := model.DocMerch{Code: "t-shirt", Price: 20}
-
+	merch2 := model.DocMerch{Code: "pink-hoody", Price: 500}
 	if err := db.Create(&merch).Error; err != nil {
 		t.Fatalf("failed to create merch: %v", err)
 	}
-
+	if err := db.Create(&merch2).Error; err != nil {
+		t.Fatalf("failed to create merch: %v", err)
+	}
+	logger = logger.WithField("UserID", *authBuyer.ID)
 	tests := []struct {
-		name      string
-		merchName string
-		userID    string
-		wantErr   bool
-		errMsg    string
+		name        string
+		merchName   string
+		wantErr     bool
+		wantBalance int32
+		errMsg      string
 	}{
 		{
-			name:      "Test valid purchase",
-			merchName: "t-shirt",
-			userID:    "user123",
-			wantErr:   false,
+			name:        "Test valid purchase",
+			merchName:   "t-shirt",
+			wantErr:     false,
+			wantBalance: 920,
 		},
 		{
-			name:      "Test insufficient balance",
-			merchName: "t-shirt",
-			userID:    "user124", // Не существует в БД
-			wantErr:   true,
-			errMsg:    "Неизвестный покупатель",
+			name:        "Test valid purchase2",
+			merchName:   "pink-hoody",
+			wantErr:     false,
+			wantBalance: 420,
 		},
 		{
 			name:      "Test unknown merch",
 			merchName: "UnknownItem", // Не существует в БД
-			userID:    "user123",
 			wantErr:   true,
 			errMsg:    "Неизвестный товар",
 		},
 		{
 			name:      "Test insufficient balance",
-			merchName: "t-shirt",
-			userID:    "user123",
+			merchName: "pink-hoody",
 			wantErr:   true,
 			errMsg:    "Недостаточно баланса для покупки",
 		},
@@ -82,6 +89,7 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 	// Прогон тестов
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			// Обновляем баланс покупателя для теста "Test insufficient balance"
 			if tt.name == "Test insufficient balance" {
 				// Если проверяем на недостаток баланса, уменьшаем баланс покупателя
@@ -108,12 +116,12 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 
 				// Проверка, что баланс покупателя обновился правильно
 				var updatedBuyer model.DocUser
-				if err := db.First(&updatedBuyer, "user_id = ?", tt.userID).Error; err != nil {
+				if err := logger.GetDB().First(&updatedBuyer, "id = ?", buyer.ID).Error; err != nil {
 					t.Fatalf("failed to find updated buyer: %v", err)
 				}
 
 				var updatedMerch model.DocUserMerch
-				if err := db.First(&updatedMerch, "root_id = ? AND merch_code = ?", *updatedBuyer.ID, tt.merchName).Error; err != nil {
+				if err := logger.GetDB().First(&updatedMerch, "root_id = ? AND merch_code = ?", *updatedBuyer.ID, tt.merchName).Error; err != nil {
 					t.Fatalf("failed to find purchased merch: %v", err)
 				}
 

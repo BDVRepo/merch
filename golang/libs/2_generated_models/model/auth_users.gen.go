@@ -15,7 +15,7 @@ type AuthUser struct {
 	ID        *string    `gorm:"column:id;type:text;primaryKey" json:"id"`
 	Login     string     `gorm:"column:login;type:text;not null" json:"login"`
 	Password  string     `gorm:"column:password;type:text;not null" json:"password"`
-	CreatedAt *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_auth_users_created_at,priority:1;default:CURRENT_TIMESTAMP" json:"created_at"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 }
 
 // TableName AuthUser's table name
