@@ -38,7 +38,7 @@ func GenerateToken(userID string) (string, error) {
 func login(logger smart_context.ISmartContext, login string, password string) (resp string, status int) {
 	// Ищем пользователя
 	var user model.AuthUser
-	if err := logger.GetDB().Where("login = ?", login).First(&user).Error; err != nil {
+	if err := logger.GetDB().First(&user, "login = ?", login).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Создаём нового пользователя
 			hashedPassword, err := helpers.HashPassword(password)
