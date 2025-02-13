@@ -17,7 +17,7 @@ type SendCoinRequest struct {
 	Amount     int32  `json:"amount"`
 }
 
-// Функция для обработки транзакции
+// Функция для отправки монет
 func sendCoinTransaction(req SendCoinRequest) error {
 
 	return req.logger.GetDB().Transaction(func(tx *gorm.DB) error {

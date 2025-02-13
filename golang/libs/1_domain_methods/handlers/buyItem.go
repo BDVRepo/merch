@@ -49,8 +49,8 @@ func buyItemTransaction(req BuyItemRequest) error {
 
 		// Запись мерча покупателю
 		docUserMerch := model.DocUserMerch{
-			RootID:  *buyer.ID,
-			MerchID: *merch.ID,
+			RootID:    *buyer.ID,
+			MerchCode: merch.Code,
 		}
 
 		if err := tx.Create(&docUserMerch).Error; err != nil {

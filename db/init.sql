@@ -1,9 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Включаем поддержку UUID
 
+CREATE DOMAIN CODE as TEXT;
 
 CREATE TABLE doc_merchs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
+    code TEXT NOT NULL PRIMARY KEY,
     price INT NOT NULL CHECK (price > 0),
     created_at TIMESTAMP DEFAULT now()
 );
@@ -28,7 +28,7 @@ CREATE TABLE doc_users (
 CREATE TABLE doc_user_merchs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     root_id UUID NOT NULL REFERENCES doc_users(id) ON DELETE CASCADE,
-    merch_id UUID NOT NULL REFERENCES doc_merchs(id)
+    merch_code CODE NOT NULL REFERENCES doc_merchs(code)
 );
 
 CREATE TABLE doc_transactions (
@@ -48,7 +48,7 @@ CREATE INDEX idx_doc_transactions_created_at ON doc_transactions (created_at DES
 CREATE INDEX idx_doc_transactions_sender_receiver ON doc_transactions (sender_id, receiver_id);
 
 -- Вставка товаров
-INSERT INTO doc_merchs (name, price) VALUES
+INSERT INTO doc_merchs (code, price) VALUES
     ('t-shirt', 80),
     ('cup', 20),
     ('book', 50),

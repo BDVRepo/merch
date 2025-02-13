@@ -12,13 +12,11 @@ const TableNameDocTransaction = "doc_transactions"
 
 // DocTransaction mapped from table <doc_transactions>
 type DocTransaction struct {
-	ID            *string    `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	SenderID      string     `gorm:"column:sender_id;type:uuid;not null;index:idx_doc_transactions_sender_receiver,priority:1" json:"sender_id"`
-	OperationCode string     `gorm:"column:operation_code;type:text;not null" json:"operation_code"`
-	ReceiverID    *string    `gorm:"column:receiver_id;type:uuid;index:idx_doc_transactions_sender_receiver,priority:2" json:"receiver_id"`
-	MerchID       *string    `gorm:"column:merch_id;type:uuid" json:"merch_id"`
-	Amount        int32      `gorm:"column:amount;type:integer;not null" json:"amount"`
-	CreatedAt     *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_doc_transactions_created_at,priority:1;default:now()" json:"created_at"`
+	ID         *string    `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	SenderID   string     `gorm:"column:sender_id;type:uuid;not null;index:idx_doc_transactions_sender_receiver,priority:1" json:"sender_id"`
+	ReceiverID *string    `gorm:"column:receiver_id;type:uuid;index:idx_doc_transactions_sender_receiver,priority:2" json:"receiver_id"`
+	Amount     int32      `gorm:"column:amount;type:integer;not null" json:"amount"`
+	CreatedAt  *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_doc_transactions_created_at,priority:1;default:now()" json:"created_at"`
 }
 
 // TableName DocTransaction's table name

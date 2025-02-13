@@ -43,6 +43,7 @@ func LoginHandler(logger smart_context.ISmartContext) http.HandlerFunc {
 			Password string `json:"password"`
 		}
 
+		// Декодирование JSON тела запроса
 		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
