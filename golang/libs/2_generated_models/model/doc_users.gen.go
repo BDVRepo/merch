@@ -12,11 +12,11 @@ const TableNameDocUser = "doc_users"
 
 // DocUser mapped from table <doc_users>
 type DocUser struct {
-	ID        *string    `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	UserID    string     `gorm:"column:user_id;type:uuid;not null" json:"user_id"`
+	ID        *string    `gorm:"column:id;type:text;primaryKey" json:"id"`
+	UserID    string     `gorm:"column:user_id;type:text;not null" json:"user_id"`
 	Name      string     `gorm:"column:name;type:text;not null" json:"name"`
 	Balance   int32      `gorm:"column:balance;type:integer;not null" json:"balance"`
-	CreatedAt *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_doc_users_created_at,priority:1;default:now()" json:"created_at"`
+	CreatedAt *time.Time `gorm:"column:created_at;type:timestamp without time zone;index:idx_doc_users_created_at,priority:1;default:CURRENT_TIMESTAMP" json:"created_at"`
 }
 
 // TableName DocUser's table name

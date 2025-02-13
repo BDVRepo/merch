@@ -17,7 +17,6 @@ import (
 
 func main() {
 	env_vars.LoadEnvVars() // load env vars from .env file if ENV_PATH is specified
-	os.Setenv("LOG_LEVEL", "debug")
 	BACKEND_PORT, ok := os.LookupEnv("BACKEND_PORT")
 	if !ok {
 		BACKEND_PORT = "8080"

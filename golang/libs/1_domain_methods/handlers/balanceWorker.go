@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"log"
-)
+import "bdv-avito-merch/libs/4_common/safe_go"
 
 // Канал для работы с запросами
 var balanceRequests = make(chan interface{}, 1000) // Канал для различных задач
@@ -11,18 +9,27 @@ var balanceRequests = make(chan interface{}, 1000) // Канал для разл
 func BalanceWorker() {
 	for {
 		select {
-		case req := <-balanceRequests:
-			switch r := req.(type) {
-			case SendCoinRequest:
-				err := sendCoinTransaction(r)
-				if err != nil {
-					log.Println("Error processing send coin:", err)
-				}
-			case BuyItemRequest:
-				err := buyItemTransaction(r)
-				if err != nil {
-					log.Println("Error processing buy item:", err)
-				}
+		case query := <-balanceRequests:
+			switch q := query.(type) {
+			case SendItemQuery:
+				safe_go.SafeGo(q.r.logger, func() {
+					err, status := sendCoinTransaction(q.r)
+
+					q.responseChan <- Response{
+						err:    err,
+						status: status,
+					}
+				})
+
+			case BuyItemQuery:
+				safe_go.SafeGo(q.r.logger, func() {
+					err, status := buyItemTransaction(q.r)
+
+					q.responseChan <- Response{
+						err:    err,
+						status: status,
+					}
+				})
 			}
 		}
 	}

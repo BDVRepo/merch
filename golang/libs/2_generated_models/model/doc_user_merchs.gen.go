@@ -8,8 +8,8 @@ const TableNameDocUserMerch = "doc_user_merchs"
 
 // DocUserMerch mapped from table <doc_user_merchs>
 type DocUserMerch struct {
-	ID        *string `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	RootID    string  `gorm:"column:root_id;type:uuid;not null" json:"root_id"`
+	ID        *string `gorm:"column:id;type:text;primaryKey" json:"id"`
+	RootID    string  `gorm:"column:root_id;type:text;not null" json:"root_id"`
 	MerchCode string  `gorm:"column:merch_code;type:code;not null" json:"merch_code"`
 }
 
