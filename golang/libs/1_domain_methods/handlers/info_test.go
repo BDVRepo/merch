@@ -72,13 +72,7 @@ func TestUnit_InfoFunction(t *testing.T) {
 		t.Fatalf("Не удалось обновить баланс/имя receiver: %v", err)
 	}
 
-	// 2. Создаём товар для покупки
-	merch := model.DocMerch{Code: "t-shirt", Price: 20}
-	if err := db.Create(&merch).Error; err != nil {
-		t.Fatalf("Не удалось создать товар: %v", err)
-	}
-
-	// 3. Пользователь sender покупает мерч "t-shirt" через buyItemTransaction
+	// 3. Пользователь sender покупает мерч "t-shirt = 80" через buyItemTransaction
 	logger = logger.WithField("UserID", *authSender.ID)
 	buyReq := BuyItemRequest{
 		logger:    logger,
@@ -87,9 +81,10 @@ func TestUnit_InfoFunction(t *testing.T) {
 	if err, _ := buyItemTransaction(buyReq); err != nil {
 		t.Fatalf("buyItemTransaction завершилась ошибкой: %v", err)
 	}
-	// После покупки баланс sender становится: 1000 - 20 = 980
+	// После покупки баланс sender становится: 1000 - 80 = 920
 
 	// 4. Отправка монет: sender переводит 200 монет receiver
+	// Баланс sender становится: 920 - 200 = 720, а receiver: 500 + 200 = 700
 	sendReq1 := SendCoinRequest{
 		logger:     logger,
 		ToUsername: "Receiver", // Имя получателя должно совпадать с docReceiver.name
@@ -98,9 +93,9 @@ func TestUnit_InfoFunction(t *testing.T) {
 	if err, status := sendCoinTransaction(sendReq1); err != nil || status != 200 {
 		t.Fatalf("sendCoinTransaction от sender завершилась ошибкой: %v, статус: %d", err, status)
 	}
-	// Баланс sender становится: 980 - 200 = 780, а receiver: 500 + 200 = 700
 
 	// 5. Отправка монет: receiver переводит 150 монет sender
+	// Баланс receiver становится: 700 - 150 = 550, а sender: 720 + 150 = 870
 	logger = logger.WithField("UserID", *authReceiver.ID)
 	sendReq2 := SendCoinRequest{
 		logger:     logger,
@@ -110,7 +105,6 @@ func TestUnit_InfoFunction(t *testing.T) {
 	if err, status := sendCoinTransaction(sendReq2); err != nil || status != 200 {
 		t.Fatalf("sendCoinTransaction от receiver завершилась ошибкой: %v, статус: %d", err, status)
 	}
-	// Баланс receiver становится: 700 - 150 = 550, а sender: 780 + 150 = 930
 
 	// 6. Получаем информацию о пользователе sender через функцию info
 	infoResp, err := info(logger, docSender.UserID)
@@ -119,7 +113,7 @@ func TestUnit_InfoFunction(t *testing.T) {
 	}
 
 	// Проверяем итоговый баланс пользователя sender
-	expectedBalance := int32(930) // 1000 - 20 (покупка) - 200 (отправка) + 150 (получено) = 930
+	expectedBalance := int32(870) // 1000 - 20 (покупка) - 200 (отправка) + 150 (получено) = 930
 	if infoResp.Coins != expectedBalance {
 		t.Errorf("Ожидался баланс %d, получено %d", expectedBalance, infoResp.Coins)
 	}
