@@ -50,6 +50,11 @@ func sendCoinTransaction(req SendCoinRequest) (err error, status int) {
 			return fmt.Errorf("Ошибка при получении получателя: %w", err)
 		}
 
+		if *sender.ID == *receiver.ID {
+			status = http.StatusBadRequest
+			return fmt.Errorf("Нельзя отправить монеты самому себе")
+		}
+
 		// 2. Проверка на достаточное количество монет у отправителя
 		if sender.Balance < req.Amount {
 			status = http.StatusPaymentRequired
