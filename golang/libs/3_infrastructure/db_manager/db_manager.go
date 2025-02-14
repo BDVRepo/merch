@@ -4,9 +4,18 @@ import (
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"errors"
 	"os"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+)
+
+const (
+	maxConns       = 500
+	maxConLifeTime = 2 * time.Minute
+	maxConIdleTime = 1 * time.Minute
 )
 
 type DbManager struct {
@@ -19,32 +28,46 @@ func NewDbManager(sctx smart_context.ISmartContext) (*DbManager, error) {
 	if !ok {
 		return nil, errors.New("DATABASE_URL is not set")
 	}
-	sctx.Debugf("DATABASE_URL: %s", databaseUrl)
-
-	if sctx == nil {
-		sctx = smart_context.NewSmartContext()
-	}
 
 	jwtSecret, ok := os.LookupEnv("JWT_SECRET")
 	if !ok {
 		return nil, errors.New("JWT_SECRET is not set")
 	}
-	sctx.Debugf("JWT_SECRET is set")
 
-	db, err := gorm.Open(
-		postgres.Open(databaseUrl),
-		&gorm.Config{},
-	)
+	// Создаем конфигурацию пула соединений
+	config, err := pgxpool.ParseConfig(databaseUrl)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = int32(maxConns)
+	config.MaxConnLifetime = maxConLifeTime
+	config.MaxConnIdleTime = maxConIdleTime
+
+	// Создаем пул соединений
+	pool, err := pgxpool.NewWithConfig(sctx.GetContext(), config)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &DbManager{
-		db:        db,
-		jwtSecret: jwtSecret,
+	// Преобразуем pgxpool.Pool в sql.DB через stdlib
+	stdDB := stdlib.OpenDBFromPool(pool)
+
+	// Инициализируем GORM
+	db, err := gorm.Open(
+		postgres.New(postgres.Config{Conn: stdDB}),
+		&gorm.Config{
+			// PrepareStmt: true,
+			// ConnPool:    stdDB,
+			// Logger: smart_context.NewGormLoggerWrapper(sctx),
+		})
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
+	return &DbManager{
+		db:        db,
+		jwtSecret: jwtSecret,
+	}, nil
 }
 
 func (dbmanager *DbManager) GetGORM() *gorm.DB {
