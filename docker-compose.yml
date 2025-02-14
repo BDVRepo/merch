@@ -18,6 +18,13 @@ services:
       start_period: 10s
     networks:
       - internal
+    command: >
+      postgres -c max_connections=1000
+               -c shared_buffers=512MB
+               -c work_mem=16MB
+               -c effective_cache_size=1GB
+               -c maintenance_work_mem=256MB
+               -c idle_in_transaction_session_timeout=30000
 
   backend:
     build:

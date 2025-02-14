@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	maxConns       = 500
-	maxConLifeTime = 2 * time.Minute
-	maxConIdleTime = 1 * time.Minute
+	maxConns       = 1000
+	maxConLifeTime = 90 * time.Second
+	maxConIdleTime = 20 * time.Second
 )
 
 type DbManager struct {
@@ -56,9 +56,9 @@ func NewDbManager(sctx smart_context.ISmartContext) (*DbManager, error) {
 	db, err := gorm.Open(
 		postgres.New(postgres.Config{Conn: stdDB}),
 		&gorm.Config{
-			// PrepareStmt: true,
-			// ConnPool:    stdDB,
-			// Logger: smart_context.NewGormLoggerWrapper(sctx),
+			PrepareStmt: true,
+			ConnPool:    stdDB,
+			Logger:      smart_context.NewGormLoggerWrapper(sctx),
 		})
 	if err != nil {
 		return nil, err

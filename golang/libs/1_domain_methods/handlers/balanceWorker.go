@@ -3,7 +3,7 @@ package handlers
 import "bdv-avito-merch/libs/4_common/safe_go"
 
 // Канал для работы с запросами
-var balanceRequests = make(chan interface{}, 1000) // Канал для различных задач
+var balanceRequests = make(chan interface{}, 100000) // Канал для различных задач
 
 // Обработчик очереди задач
 func BalanceWorker() {
