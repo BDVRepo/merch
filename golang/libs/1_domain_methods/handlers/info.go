@@ -4,8 +4,8 @@ import (
 	"bdv-avito-merch/libs/2_generated_models/model"
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -32,20 +32,10 @@ type Received struct {
 	Amount   int32  `json:"amount"`
 }
 
-// InfoHandler — получить информацию о монетах, инвентаре и транзакциях
-func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *http.Request) {
-	fields := logger.GetDataFields()
-
-	userID, ok := fields["UserID"].(string)
-	if !ok {
-		http.Error(w, "Не найден user_id в сессии", http.StatusUnauthorized)
-		return
-	}
-
+func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, error) {
 	var user model.DocUser
 	if err := logger.GetDB().First(&user, "user_id = ?", userID).Error; err != nil {
-		http.Error(w, "Пользователь не найден", http.StatusNotFound)
-		return
+		return nil, fmt.Errorf("пользователь не найден")
 	}
 
 	// Получаем баланс пользователя
@@ -61,39 +51,32 @@ func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *h
 		Where("root_id = ?", user.ID).
 		Group("merch_code").
 		Scan(&inventoryData).Error; err != nil {
-		http.Error(w, "Ошибка получения инвентаря", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("ошибка получения инвентаря")
 	}
 
-	// Преобразуем в нужную структуру (избегаем nil)
-	inventory := make([]Item, 0)
+	inventory := make([]Item, 0, len(inventoryData))
 	for _, item := range inventoryData {
 		inventory = append(inventory, Item{Name: item.MerchCode, Quantity: item.Count})
 	}
 
-	// Загружаем транзакции пользователя + получаем имя получателя/отправителя
+	// Загружаем транзакции пользователя
 	var transactions []struct {
-		ID         uuid.UUID  `gorm:"column:id"`
 		SenderID   uuid.UUID  `gorm:"column:sender_id"`
 		ReceiverID *uuid.UUID `gorm:"column:receiver_id"`
 		Amount     int32      `gorm:"column:amount"`
-		CreatedAt  time.Time  `gorm:"column:created_at"`
 		ToName     *string    `gorm:"column:to_name"`
 		FromName   *string    `gorm:"column:from_name"`
 	}
 	if err := logger.GetDB().Raw(`
-		SELECT t.id, t.sender_id, t.receiver_id, t.amount, t.created_at,
-			   su.name AS from_name, ru.name AS to_name
+		SELECT t.sender_id, t.receiver_id, t.amount, su.name AS from_name, ru.name AS to_name
 		FROM doc_transactions t
 		LEFT JOIN doc_users su ON t.sender_id = su.id
 		LEFT JOIN doc_users ru ON t.receiver_id = ru.id
 		WHERE t.sender_id = ? OR t.receiver_id = ?`, user.ID, user.ID).
 		Scan(&transactions).Error; err != nil {
-		http.Error(w, "Ошибка получения транзакций", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("ошибка получения транзакций")
 	}
 
-	// Разбиваем транзакции на отправленные и полученные
 	sentTransactions := make([]Sent, 0)
 	receivedTransactions := make([]Received, 0)
 
@@ -111,16 +94,31 @@ func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *h
 		}
 	}
 
-	// Формируем ответ (избегаем nil)
-	response := InfoResponse{
+	return &InfoResponse{
 		Coins:     coins,
 		Inventory: inventory,
 		CoinsHistory: Transactions{
 			Sent:     sentTransactions,
 			Received: receivedTransactions,
 		},
+	}, nil
+}
+
+// InfoHandler — получить информацию о монетах, инвентаре и транзакциях
+func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *http.Request) {
+	fields := logger.GetDataFields()
+	userID, ok := fields["UserID"].(string)
+	if !ok {
+		http.Error(w, "Не найден user_id в сессии", http.StatusUnauthorized)
+		return
+	}
+
+	info, err := info(logger, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(info)
 }

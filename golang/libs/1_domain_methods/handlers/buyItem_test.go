@@ -36,7 +36,7 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 	logger := smart_context.NewSmartContext().WithDB(db)
 
 	// Заполнение тестовыми данными
-	authBuyer := model.AuthUser{Login: "user123", Password: "password123", ID: helpers.GenerateUUID()}
+	authBuyer := model.AuthUser{Login: "user1", Password: "password", ID: helpers.GenerateUUID()}
 	if err := db.Create(&authBuyer).Error; err != nil {
 		t.Fatalf("failed to create merch: %v", err)
 	}
