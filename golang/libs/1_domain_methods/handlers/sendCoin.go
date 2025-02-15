@@ -107,7 +107,7 @@ func SendCoinHandler(logger smart_context.ISmartContext, w http.ResponseWriter, 
 	}
 
 	// Ставим задачу в очередь
-	balanceRequests <- query
+	handlersRequests <- query
 
 	response := <-responseChan
 

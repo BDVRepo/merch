@@ -14,8 +14,8 @@ import (
 
 const (
 	maxConns       = 1000
-	maxConLifeTime = 90 * time.Second
-	maxConIdleTime = 20 * time.Second
+	maxConLifeTime = 120 * time.Second
+	maxConIdleTime = 30 * time.Second
 )
 
 type DbManager struct {

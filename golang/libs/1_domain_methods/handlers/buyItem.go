@@ -18,7 +18,6 @@ type BuyItemRequest struct {
 }
 type BuyItemQuery struct {
 	r            BuyItemRequest
-	w            http.ResponseWriter
 	responseChan chan Response
 }
 type Response struct {
@@ -107,12 +106,11 @@ func BuyItemHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r
 	}
 	query := BuyItemQuery{
 		r:            req,
-		w:            w,
 		responseChan: responseChan,
 	}
 
 	// Ставим задачу в очередь и ждем результат
-	balanceRequests <- query
+	handlersRequests <- query
 
 	response := <-responseChan
 

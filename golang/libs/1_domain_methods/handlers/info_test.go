@@ -107,11 +107,14 @@ func TestUnit_InfoFunction(t *testing.T) {
 	}
 
 	// 6. Получаем информацию о пользователе sender через функцию info
-	infoResp, err := info(logger, docSender.UserID)
+	infoResp, err, status := info(logger, docSender.UserID)
 	if err != nil {
 		t.Fatalf("Функция info завершилась ошибкой: %v", err)
 	}
-
+	// Проверяем статус 200
+	if status != 200 {
+		t.Errorf("Ожидался статус 200, получено %d", status)
+	}
 	// Проверяем итоговый баланс пользователя sender
 	expectedBalance := int32(870) // 1000 - 20 (покупка) - 200 (отправка) + 150 (получено) = 930
 	if infoResp.Coins != expectedBalance {

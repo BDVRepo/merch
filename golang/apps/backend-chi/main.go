@@ -51,9 +51,11 @@ func main() {
 	r.Post("/api/sendCoin", middleware.WithSmartContext(logger, handlers.SendCoinHandler))
 	r.Get("/api/buy/{item}", middleware.WithSmartContext(logger, handlers.BuyItemHandler))
 
-	safe_go.SafeGo(logger, func() {
-		handlers.BalanceWorker()
-	})
+	for i := 0; i < 10; i++ {
+		safe_go.SafeGo(logger, func() {
+			handlers.HandlersWorker()
+		})
+	}
 
 	logger.Info("Server listening on port " + BACKEND_PORT)
 	err = http.ListenAndServe(":"+BACKEND_PORT, r)

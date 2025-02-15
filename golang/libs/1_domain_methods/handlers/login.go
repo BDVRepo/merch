@@ -14,6 +14,20 @@ import (
 	"gorm.io/gorm"
 )
 
+type LoginRequest struct {
+	logger   smart_context.ISmartContext
+	Login    string
+	Password string
+}
+type LoginQuery struct {
+	r            LoginRequest
+	responseChan chan LoginResponse
+}
+type LoginResponse struct {
+	token  string
+	status int
+	err    error
+}
 type Claims struct {
 	UserID string `json:"user_id"`
 	jwt.RegisteredClaims
@@ -94,13 +108,26 @@ func LoginHandler(logger smart_context.ISmartContext) http.HandlerFunc {
 			return
 		}
 
-		token, status := login(logger, requestData.Login, requestData.Password)
-		if status != http.StatusOK {
-			http.Error(w, token, status)
+		responseChan := make(chan LoginResponse)
+		query := LoginQuery{
+			r: LoginRequest{
+				logger:   logger,
+				Login:    requestData.Login,
+				Password: requestData.Password,
+			},
+			responseChan: responseChan,
+		}
+
+		// Ставим запрос в очередь
+		handlersRequests <- query
+		response := <-responseChan
+
+		// Возвращаем HTTP-ответ
+		if response.err != nil {
+			http.Error(w, response.err.Error(), response.status)
 			return
 		}
-		// Отправляем токен в теле ответа
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": token})
+		json.NewEncoder(w).Encode(map[string]string{"token": response.token})
 	}
 }

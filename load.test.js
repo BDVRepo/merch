@@ -4,36 +4,42 @@ import { check, sleep } from 'k6';
 const BASE_URL = 'http://localhost:8080/api';
 
 export let options = {
-  vus: 500,  // Количество виртуальных пользователей
-  rps: 1000,  // Запросов в секунду
-  duration: '1m',  // Длительность теста
+  vus: 1000, 
+  rps: 1000, 
+  duration: '1m', // Длительность теста
 };
 
 export default function () {
+  const userId = __VU; // Уникальный номер виртуального пользователя
+  const username = `loadtester${userId}`;
+
   // 1. Авторизация
-  const token = getAuthToken('loadtester1', 'loader');
+  const token = getAuthToken(username, 'loader');
   check(token, { 'Token exists': (t) => t !== undefined });
+  
+  if (!token) {
+    return;
+  }
+
   // 2. Покупка товара
   buyItem(token);
 
-  // 3. Отправка монет пользователю 2
-  sendCoins(token, 'loadtester2');
+  // 3. Отправка монет следующему пользователю (циклически)
+  const nextUserId = userId % 1000 + 1;
+  sendCoins(token, `loadtester${nextUserId}`);
 
   // 4. Получение информации о себе
   getInfo(token);
-
-  // Пауза между действиями (чтобы имитировать поведение пользователя)
-  sleep(1);
 }
 
 // Функция авторизации
-function getAuthToken(username, password) {
+function getAuthToken(username,id, password) {
   const res = http.post(`${BASE_URL}/auth`, JSON.stringify({ username, password }), {
     headers: { 'Content-Type': 'application/json' },
   });
-  check(res, { [`Auth ${username} success`]: (r) => r.status === 200 });
+  check(res, { [`Auth success`]: (r) => r.status === 200 });
 
-  return JSON.parse(res.body).token;
+  return res.status === 200 ? JSON.parse(res.body).token : null;
 }
 
 // Функция заголовков авторизации

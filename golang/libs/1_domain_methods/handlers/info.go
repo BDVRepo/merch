@@ -31,11 +31,24 @@ type Received struct {
 	FromUser string `json:"from_user"`
 	Amount   int32  `json:"amount"`
 }
+type InfoRequest struct {
+	logger smart_context.ISmartContext
+	UserID string
+}
+type InfoQuery struct {
+	r            InfoRequest
+	responseChan chan InfoResponseData
+}
+type InfoResponseData struct {
+	data   *InfoResponse
+	err    error
+	status int
+}
 
-func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, error) {
+func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, error, int) {
 	var user model.DocUser
 	if err := logger.GetDB().First(&user, "user_id = ?", userID).Error; err != nil {
-		return nil, fmt.Errorf("пользователь не найден")
+		return nil, fmt.Errorf("пользователь не найден"), http.StatusNotFound
 	}
 
 	// Получаем баланс пользователя
@@ -51,7 +64,7 @@ func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, err
 		Where("root_id = ?", user.ID).
 		Group("merch_code").
 		Scan(&inventoryData).Error; err != nil {
-		return nil, fmt.Errorf("ошибка получения инвентаря")
+		return nil, fmt.Errorf("ошибка получения инвентаря"), http.StatusInternalServerError
 	}
 
 	inventory := make([]Item, 0, len(inventoryData))
@@ -74,7 +87,7 @@ func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, err
 		LEFT JOIN doc_users ru ON t.receiver_id = ru.id
 		WHERE t.sender_id = ? OR t.receiver_id = ?`, user.ID, user.ID).
 		Scan(&transactions).Error; err != nil {
-		return nil, fmt.Errorf("ошибка получения транзакций")
+		return nil, fmt.Errorf("ошибка получения транзакций"), http.StatusInternalServerError
 	}
 
 	sentTransactions := make([]Sent, 0)
@@ -101,7 +114,7 @@ func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, err
 			Sent:     sentTransactions,
 			Received: receivedTransactions,
 		},
-	}, nil
+	}, nil, http.StatusOK
 }
 
 // InfoHandler — получить информацию о монетах, инвентаре и транзакциях
@@ -109,16 +122,28 @@ func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *h
 	fields := logger.GetDataFields()
 	userID, ok := fields["UserID"].(string)
 	if !ok {
-		http.Error(w, "Не найден user_id в сессии", http.StatusUnauthorized)
+		http.Error(w, `{"errors": "Не авторизован"}`, http.StatusUnauthorized)
 		return
 	}
 
-	info, err := info(logger, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	responseChan := make(chan InfoResponseData)
+	query := InfoQuery{
+		r: InfoRequest{
+			logger: logger,
+			UserID: userID,
+		},
+		responseChan: responseChan,
+	}
+
+	// Отправляем запрос в воркер
+	handlersRequests <- query
+	response := <-responseChan
+
+	if response.err != nil {
+		http.Error(w, response.err.Error(), response.status)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(info)
+	json.NewEncoder(w).Encode(response.data)
 }
