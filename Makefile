@@ -3,6 +3,7 @@ ENV_LOCAL=./envs/local.env
 include $(ENV_LOCAL)
 export $(shell sed 's/=.*//' $(ENV_LOCAL))
 
+
 # Docker команды
 docker-up:
 	docker-compose --file $(COMPOSE_FILE) up -d

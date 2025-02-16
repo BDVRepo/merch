@@ -25,18 +25,18 @@ type Response struct {
 	status int
 }
 
-var Merchs map[string]int32 = map[string]int32{
-	"t-shirt":    80,
-	"cup":        20,
-	"book":       50,
-	"pen":        10,
-	"powerbank":  200,
-	"hoody":      300,
-	"umbrella":   200,
-	"socks":      10,
-	"wallet":     50,
-	"pink-hoody": 500,
-}
+// var Merchs map[string]int32 = map[string]int32{
+// 	"t-shirt":    80,
+// 	"cup":        20,
+// 	"book":       50,
+// 	"pen":        10,
+// 	"powerbank":  200,
+// 	"hoody":      300,
+// 	"umbrella":   200,
+// 	"socks":      10,
+// 	"wallet":     50,
+// 	"pink-hoody": 500,
+// }
 
 // Функция для обработки покупки товара
 func buyItemTransaction(req BuyItemRequest) (err error, status int) {
@@ -59,21 +59,19 @@ func buyItemTransaction(req BuyItemRequest) (err error, status int) {
 			status = http.StatusNotFound
 			return fmt.Errorf("Неизвестный покупатель")
 		}
-
-		// Проверяем наличие товара в мапке
-		merchPrice, exists := Merchs[req.MerchName]
-		if !exists {
+		var merch model.DocMerch
+		if err := tx.First(&merch, "code = ?", req.MerchName).Error; err != nil {
 			status = http.StatusNotFound
 			return fmt.Errorf("Неизвестный товар")
 		}
 
-		if buyer.Balance < merchPrice {
+		if buyer.Balance < merch.Price {
 			status = http.StatusPaymentRequired
 			return fmt.Errorf("Недостаточно баланса для покупки")
 		}
 
 		// Обновление баланса покупателя
-		if err := tx.Model(&buyer).Update("balance", buyer.Balance-merchPrice).Error; err != nil {
+		if err := tx.Model(&buyer).Update("balance", buyer.Balance-merch.Price).Error; err != nil {
 			status = http.StatusInternalServerError
 			return fmt.Errorf("Не удалось обновить баланс покупателя")
 		}

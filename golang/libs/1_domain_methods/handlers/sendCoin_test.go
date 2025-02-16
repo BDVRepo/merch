@@ -82,6 +82,22 @@ func TestUnit_SendCoinTransaction(t *testing.T) {
 			wantStatus: 404,
 			errMsg:     "Ошибка при получении получателя",
 		},
+		{
+			name:       "Test send coins to self",
+			toUsername: "Sender", // отправка себе
+			amount:     100,
+			wantErr:    true,
+			wantStatus: 400,
+			errMsg:     "Нельзя отправить монеты самому себе",
+		},
+		{
+			name:       "Test invalid request (missing amount)",
+			toUsername: "Receiver",
+			amount:     0,
+			wantErr:    true,
+			wantStatus: 400,
+			errMsg:     "Неверные данные запроса: сумма должна быть больше 0",
+		},
 	}
 
 	for _, tt := range tests {

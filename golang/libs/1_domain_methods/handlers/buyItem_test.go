@@ -84,6 +84,12 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 			wantErr:   true,
 			errMsg:    "Недостаточно баланса для покупки",
 		},
+		{ // Покупка товара при балансе, равном цене товара
+			name:        "Test exact balance purchase",
+			merchName:   "t-shirt",
+			wantErr:     false,
+			wantBalance: 0,
+		},
 	}
 
 	// Прогон тестов
@@ -95,6 +101,11 @@ func TestUnit_BuyItemTransaction(t *testing.T) {
 				// Если проверяем на недостаток баланса, уменьшаем баланс покупателя
 				if err := db.Model(&buyer).Update("balance", 5.0).Error; err != nil {
 					t.Fatalf("failed to update buyer's balance: %v", err)
+				}
+			}
+			if tt.name == "Test exact balance purchase" {
+				if err := db.Model(&buyer).Update("balance", 20).Error; err != nil {
+					t.Fatalf("failed to set exact balance: %v", err)
 				}
 			}
 

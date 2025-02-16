@@ -11,6 +11,7 @@ import (
 )
 
 type InfoResponse struct {
+	Name         string       `json:"name"`
 	Coins        int32        `json:"coins"`
 	Inventory    []Item       `json:"inventory"`
 	CoinsHistory Transactions `json:"coins_history"`
@@ -108,6 +109,7 @@ func info(logger smart_context.ISmartContext, userID string) (*InfoResponse, err
 	}
 
 	return &InfoResponse{
+		Name:      user.Name,
 		Coins:     coins,
 		Inventory: inventory,
 		CoinsHistory: Transactions{

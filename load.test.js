@@ -17,9 +17,6 @@ export default function () {
   const token = getAuthToken(username, 'loader');
   check(token, { 'Token exists': (t) => t !== undefined });
   
-  if (!token) {
-    return;
-  }
 
   // 2. Покупка товара
   buyItem(token);

@@ -72,6 +72,12 @@ func TestUnit_InfoFunction(t *testing.T) {
 		t.Fatalf("Не удалось обновить баланс/имя receiver: %v", err)
 	}
 
+	// 2. Создаём товар для покупки
+	merch := model.DocMerch{Code: "t-shirt", Price: 80}
+	if err := db.Create(&merch).Error; err != nil {
+		t.Fatalf("Не удалось создать товар: %v", err)
+	}
+
 	// 3. Пользователь sender покупает мерч "t-shirt = 80" через buyItemTransaction
 	logger = logger.WithField("UserID", *authSender.ID)
 	buyReq := BuyItemRequest{

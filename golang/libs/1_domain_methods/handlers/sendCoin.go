@@ -28,6 +28,12 @@ type SendItemQuery struct {
 func sendCoinTransaction(req SendCoinRequest) (err error, status int) {
 	status = http.StatusOK
 	err = req.logger.GetDB().Transaction(func(tx *gorm.DB) error {
+		// Проверка на нулевую сумму
+		if req.Amount <= 0 {
+			status = http.StatusBadRequest
+			return fmt.Errorf("Неверные данные запроса: сумма должна быть больше 0")
+		}
+
 		var sender model.DocUser
 		var receiver model.DocUser
 
