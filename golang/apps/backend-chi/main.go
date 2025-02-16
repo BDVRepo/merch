@@ -9,6 +9,7 @@ import (
 	"bdv-avito-merch/libs/4_common/smart_context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
@@ -53,11 +54,19 @@ func main() {
 
 	for i := 0; i < 10; i++ {
 		safe_go.SafeGo(logger, func() {
-			handlers.HandlersWorker()
+			handlers.Worker()
 		})
 	}
 
 	logger.Info("Server listening on port " + BACKEND_PORT)
-	err = http.ListenAndServe(":"+BACKEND_PORT, r)
+	srv := &http.Server{
+		Addr:         ":" + BACKEND_PORT,
+		Handler:      r,
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 120 * time.Second,
+		IdleTimeout:  240 * time.Second,
+	}
+
+	err = srv.ListenAndServe()
 	logger.Fatal(err)
 }

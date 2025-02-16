@@ -118,5 +118,9 @@ func BuyItemHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Мерч успешно куплен"))
+	if _, err := w.Write([]byte("Мерч успешно куплен")); err != nil {
+		http.Error(w, "Ошибка записи в response", http.StatusInternalServerError)
+		return
+	}
+
 }

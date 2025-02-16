@@ -147,5 +147,8 @@ func InfoHandler(logger smart_context.ISmartContext, w http.ResponseWriter, r *h
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response.data)
+	if err := json.NewEncoder(w).Encode(response.data); err != nil {
+		http.Error(w, "Ошибка кодирования JSON", http.StatusInternalServerError)
+		return
+	}
 }

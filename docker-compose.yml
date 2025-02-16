@@ -39,7 +39,7 @@ services:
       - ./envs:/envs
     depends_on:
       - postgres
-    command: bash -c "sleep 5 && ./main"
+    command: bash -c "sleep 10 && ./main"
     healthcheck:
       test: ["CMD-SHELL", "nc -z -v postgres 5432"]
       interval: 5s

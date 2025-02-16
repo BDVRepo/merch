@@ -123,5 +123,9 @@ func SendCoinHandler(logger smart_context.ISmartContext, w http.ResponseWriter, 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Токены успешно переданы"))
+	if _, err := w.Write([]byte("Токены успешно переданы")); err != nil {
+		http.Error(w, "Ошибка записи в response", http.StatusInternalServerError)
+		return
+	}
+
 }

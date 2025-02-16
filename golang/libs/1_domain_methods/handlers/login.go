@@ -128,6 +128,10 @@ func LoginHandler(logger smart_context.ISmartContext) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": response.token})
+		if err := json.NewEncoder(w).Encode(map[string]string{"token": response.token}); err != nil {
+			http.Error(w, "Ошибка кодирования JSON", http.StatusInternalServerError)
+			return
+		}
+
 	}
 }

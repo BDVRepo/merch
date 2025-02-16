@@ -14,3 +14,9 @@ linters:
     - gocyclo # Анализирует сложность функций
     - unconvert # Находит ненужные приведения типов
     - prealloc # Оптимизирует выделение памяти в слайсах
+
+linters-settings:
+  revive:
+    rules:
+      - name: var-naming
+        disabled: true
