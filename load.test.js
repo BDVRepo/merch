@@ -6,7 +6,7 @@ const BASE_URL = 'http://localhost:8080/api';
 export let options = {
   vus: 1000, 
   rps: 1000, 
-  duration: '1m', // Длительность теста
+  duration: '1m',
 };
 
 export default function () {
